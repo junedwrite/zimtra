@@ -9,10 +9,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, Wand2, Check, Copy, CopyCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
+interface TableDataRow {
+  id: number;
+  Title?: string;
+  URL?: string;
+  Views?: number;
+  Likes?: number;
+  Comments?: number;
+}
+
 interface GenerateTitlesModalProps {
   isOpen: boolean;
   onClose: () => void;
-  tableData: any[];
+  tableData: TableDataRow[];
 }
 
 interface GeneratedTitle {
@@ -116,7 +125,7 @@ export default function GenerateTitlesModal({ isOpen, onClose, tableData }: Gene
           return newSet;
         });
       }, 2000);
-    } catch (error) {
+    } catch {
       toast.error('Failed to copy title');
     }
   };
@@ -135,7 +144,7 @@ export default function GenerateTitlesModal({ isOpen, onClose, tableData }: Gene
     try {
       await navigator.clipboard.writeText(selectedTitleTexts);
       toast.success(`Copied ${selectedTitles.size} title(s) to clipboard!`);
-    } catch (error) {
+    } catch {
       toast.error('Failed to copy titles');
     }
   };
@@ -148,7 +157,7 @@ export default function GenerateTitlesModal({ isOpen, onClose, tableData }: Gene
     try {
       await navigator.clipboard.writeText(allTitleTexts);
       toast.success(`Copied all ${generatedTitles.length} title(s) to clipboard!`);
-    } catch (error) {
+    } catch {
       toast.error('Failed to copy all titles');
     }
   };

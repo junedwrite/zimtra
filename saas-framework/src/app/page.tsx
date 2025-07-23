@@ -45,8 +45,20 @@ export default function Home() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) {
-      toast.error('Please enter a search query');
+    
+    // Check if we have either a search query or meaningful advanced parameters
+    const hasAdvancedParams = (
+      (advancedParams.regionCode && advancedParams.regionCode !== 'any') ||
+      (advancedParams.relevanceLanguage && advancedParams.relevanceLanguage !== 'any') ||
+      advancedParams.videoDuration !== 'any' ||
+      advancedParams.publishedAfter ||
+      advancedParams.publishedBefore ||
+      advancedParams.order !== 'relevance' ||
+      advancedParams.maxResults !== 25
+    );
+    
+    if (!searchQuery.trim() && !hasAdvancedParams) {
+      toast.error('Please enter a search query or set advanced search filters');
       return;
     }
     
@@ -60,18 +72,35 @@ export default function Home() {
     
     try {
       // Build the request payload with advanced parameters
-      const payload: any = {
-        q: searchQuery.trim()
+      const payload: {
+        q?: string;
+        regionCode: string;
+        relevanceLanguage: string;
+        videoDuration: string;
+        publishedAfter?: string;
+        publishedBefore?: string;
+        order: string;
+        maxResults: number;
+      } = {
+        regionCode: advancedParams.regionCode,
+        relevanceLanguage: advancedParams.relevanceLanguage,
+        videoDuration: advancedParams.videoDuration,
+        order: advancedParams.order,
+        maxResults: advancedParams.maxResults
       };
-
-      // Add advanced parameters only if they have values
-      if (advancedParams.regionCode && advancedParams.regionCode !== 'any') payload.regionCode = advancedParams.regionCode;
-      if (advancedParams.relevanceLanguage && advancedParams.relevanceLanguage !== 'any') payload.relevanceLanguage = advancedParams.relevanceLanguage;
-      if (advancedParams.videoDuration !== 'any') payload.videoDuration = advancedParams.videoDuration;
-      if (advancedParams.publishedAfter) payload.publishedAfter = new Date(advancedParams.publishedAfter).toISOString();
-      if (advancedParams.publishedBefore) payload.publishedBefore = new Date(advancedParams.publishedBefore).toISOString();
-      if (advancedParams.order !== 'relevance') payload.order = advancedParams.order;
-      if (advancedParams.maxResults !== 25) payload.maxResults = advancedParams.maxResults;
+      
+      // Add search query if provided
+      if (searchQuery.trim()) {
+        payload.q = searchQuery.trim();
+      }
+      
+      // Add date filters if they have values
+      if (advancedParams.publishedAfter) {
+        payload.publishedAfter = new Date(advancedParams.publishedAfter).toISOString();
+      }
+      if (advancedParams.publishedBefore) {
+        payload.publishedBefore = new Date(advancedParams.publishedBefore).toISOString();
+      }
 
       const response = await fetch(webhookUrl, {
         method: 'POST',
@@ -136,7 +165,15 @@ export default function Home() {
                   <Button 
                      type="submit" 
                      size="lg" 
-                     disabled={isSearching || !searchQuery.trim()}
+                     disabled={isSearching || (!searchQuery.trim() && !(
+                       (advancedParams.regionCode && advancedParams.regionCode !== 'any') ||
+                       (advancedParams.relevanceLanguage && advancedParams.relevanceLanguage !== 'any') ||
+                       advancedParams.videoDuration !== 'any' ||
+                       advancedParams.publishedAfter ||
+                       advancedParams.publishedBefore ||
+                       advancedParams.order !== 'relevance' ||
+                       advancedParams.maxResults !== 25
+                     ))}
                      className="h-12 px-8"
                    >
                      {isSearching ? (

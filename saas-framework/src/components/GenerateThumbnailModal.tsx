@@ -8,10 +8,29 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Image as ImageIcon, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
+interface ThumbnailData {
+  url?: string;
+  visible_name?: string;
+  thumbnails?: {
+    small?: {
+      url: string;
+    };
+  };
+}
+
+interface VideoRowData {
+  id: number;
+  Title?: string;
+  URL?: string;
+  thumbnail?: ThumbnailData[];
+  Views?: number;
+  Likes?: number;
+}
+
 interface GenerateThumbnailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  rowData: any;
+  rowData: VideoRowData;
 }
 
 export function GenerateThumbnailModal({ isOpen, onClose, rowData }: GenerateThumbnailModalProps) {
@@ -175,11 +194,11 @@ export function GenerateThumbnailModal({ isOpen, onClose, rowData }: GenerateThu
                       alt={rowData.thumbnail[0].visible_name || "Current thumbnail"}
                       className="w-32 h-20 object-cover rounded-lg border-2 border-gray-300 shadow-md transition-transform group-hover:scale-105"
                       onError={(e) => {
-                        console.error('Failed to load thumbnail image:', rowData.thumbnail[0]);
+                        console.error('Failed to load thumbnail image:', rowData.thumbnail?.[0]);
                         e.currentTarget.style.display = 'none';
                       }}
                     />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all duration-200"></div>
+                    <div className="absolute bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all duration-200 pointer-events-none"></div>
                   </div>
                   <div className="flex-1">
                     <p className="text-base font-semibold text-gray-800 mb-1">Original Thumbnail</p>
@@ -283,7 +302,7 @@ export function GenerateThumbnailModal({ isOpen, onClose, rowData }: GenerateThu
                       alt="Generated thumbnail"
                       className="w-full max-w-lg mx-auto rounded-lg border-2 border-green-300 shadow-lg transition-transform group-hover:scale-[1.02]"
                     />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-5 rounded-lg transition-all duration-200"></div>
+                    <div className="absolute bg-black bg-opacity-0 group-hover:bg-opacity-5 rounded-lg transition-all duration-200 pointer-events-none"></div>
                   </div>
                   <div className="mt-4 text-center">
                     <p className="text-sm text-green-700 font-medium bg-green-100 px-3 py-1 rounded-full inline-block">

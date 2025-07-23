@@ -17,10 +17,24 @@ interface BaserowField {
   primary?: boolean;
 }
 
+interface ThumbnailData {
+  url?: string;
+  visible_name?: string;
+  thumbnails?: {
+    small?: { url: string };
+  };
+}
+
 interface BaserowRow {
   id: number;
   order: string;
-  [key: string]: any;
+  Title?: string;
+  URL?: string;
+  Views?: number;
+  Likes?: number;
+  Comments?: number;
+  thumbnail?: ThumbnailData[];
+  [key: string]: string | number | boolean | ThumbnailData[] | undefined;
 }
 
 interface BaserowResponse {
@@ -305,7 +319,13 @@ export default function VideosPage() {
                         
                         // Handle thumbnail field specially
                         if (field.name === 'thumbnail' && Array.isArray(value) && value.length > 0) {
-                          const thumbnail = value[0];
+                          const thumbnail = value[0] as {
+                            thumbnails?: {
+                              small?: { url: string };
+                            };
+                            url?: string;
+                            visible_name?: string;
+                          };
                           return (
                             <td key={`${row.id}-${field.id}`} className="border border-gray-300 px-4 py-2">
                               <div className="flex items-center space-x-2">
@@ -318,6 +338,25 @@ export default function VideosPage() {
                                 />
                                 <span className="text-xs text-gray-500">{thumbnail.visible_name}</span>
                               </div>
+                            </td>
+                          );
+                        }
+                        
+                        // Handle URL field specially
+                        if (field.name === 'URL' && value && typeof value === 'string') {
+                          return (
+                            <td key={`${row.id}-${field.id}`} className="border border-gray-300 px-4 py-2">
+                              <Button
+                                onClick={() => window.open(value, '_blank')}
+                                variant="outline"
+                                size="sm"
+                                className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
+                              >
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                                View Video
+                              </Button>
                             </td>
                           );
                         }
