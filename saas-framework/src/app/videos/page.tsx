@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Trash2, Plus, Wand2, Image, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import GenerateTitlesModal from '@/components/GenerateTitlesModal';
+import { GenerateThumbnailModal } from '@/components/GenerateThumbnailModal';
 
 interface BaserowField {
   id: number;
@@ -40,6 +41,8 @@ export default function VideosPage() {
   const [generatingTitles, setGeneratingTitles] = useState(false);
   const [generatingImages, setGeneratingImages] = useState(false);
   const [showTitlesModal, setShowTitlesModal] = useState(false);
+  const [showThumbnailModal, setShowThumbnailModal] = useState(false);
+  const [selectedRowForThumbnail, setSelectedRowForThumbnail] = useState<BaserowRow | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -111,56 +114,9 @@ export default function VideosPage() {
     setShowTitlesModal(true);
   };
 
-  const handleGenerateThumbnailAssets = async () => {
-    if (rows.length === 0) {
-      toast.error('No data available to generate thumbnail assets for.');
-      return;
-    }
-
-    const webhookUrl = process.env.NEXT_PUBLIC_GENERATE_IMAGES_WEBHOOK;
-    if (!webhookUrl || webhookUrl === 'your_generate_images_webhook_url_here') {
-      toast.error('Generate Images webhook URL not configured.');
-      return;
-    }
-
-    setGeneratingImages(true);
-    try {
-      // Prepare data payload with current table data
-      const payload = {
-        action: 'generate_thumbnail_assets',
-        data: rows.map(row => ({
-          id: row.id,
-          title: row.Title || '',
-          url: row.URL || '',
-          thumbnail: row.thumbnail || null,
-          views: row.Views || 0,
-          likes: row.Likes || 0
-        }))
-      };
-
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        toast.success('Thumbnail asset generation request sent successfully!');
-        // Optionally refresh data after a delay
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
-      } else {
-        throw new Error(`Webhook failed with status: ${response.status}`);
-      }
-    } catch (error) {
-      console.error('Error generating thumbnail assets:', error);
-      toast.error('Failed to generate thumbnail assets. Please try again.');
-    } finally {
-      setGeneratingImages(false);
-    }
+  const handleThumbnailClick = (row: BaserowRow) => {
+    setSelectedRowForThumbnail(row);
+    setShowThumbnailModal(true);
   };
 
   const handleClearResults = async () => {
@@ -303,20 +259,7 @@ export default function VideosPage() {
                  <Wand2 className="h-4 w-4" />
                  Generate Titles
                </Button>
-               <Button 
-                 onClick={handleGenerateThumbnailAssets}
-                 variant="outline"
-                 size="sm"
-                 className="flex items-center gap-2"
-                 disabled={generatingImages || rows.length === 0}
-               >
-                 {generatingImages ? (
-                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-                 ) : (
-                   <Image className="h-4 w-4" />
-                 )}
-                 Generate Thumbnail Assets
-               </Button>
+
               <Button 
                 onClick={handleClearResults}
                 variant="destructive"
@@ -369,7 +312,9 @@ export default function VideosPage() {
                                 <img 
                                   src={thumbnail.thumbnails?.small?.url || thumbnail.url} 
                                   alt={thumbnail.visible_name}
-                                  className="w-12 h-12 object-cover rounded"
+                                  className="w-12 h-12 object-cover rounded cursor-pointer transition-all duration-200 hover:ring-2 hover:ring-yellow-400 hover:ring-offset-2 hover:shadow-lg"
+                                  onClick={() => handleThumbnailClick(row)}
+                                  title="Click to generate new thumbnail"
                                 />
                                 <span className="text-xs text-gray-500">{thumbnail.visible_name}</span>
                               </div>
@@ -428,6 +373,17 @@ export default function VideosPage() {
         onClose={() => setShowTitlesModal(false)}
         tableData={rows}
       />
+      
+      {selectedRowForThumbnail && (
+        <GenerateThumbnailModal
+          isOpen={showThumbnailModal}
+          onClose={() => {
+            setShowThumbnailModal(false);
+            setSelectedRowForThumbnail(null);
+          }}
+          rowData={selectedRowForThumbnail}
+        />
+      )}
     </div>
   );
 }

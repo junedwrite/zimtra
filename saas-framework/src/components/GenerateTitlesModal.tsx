@@ -140,6 +140,19 @@ export default function GenerateTitlesModal({ isOpen, onClose, tableData }: Gene
     }
   };
 
+  const handleCopyAllTitles = async () => {
+    const allTitleTexts = generatedTitles
+      .map(title => title.title)
+      .join('\n');
+
+    try {
+      await navigator.clipboard.writeText(allTitleTexts);
+      toast.success(`Copied all ${generatedTitles.length} title(s) to clipboard!`);
+    } catch (error) {
+      toast.error('Failed to copy all titles');
+    }
+  };
+
   const handleAcceptTitles = () => {
     if (selectedTitles.size === 0) {
       toast.error('Please select at least one title.');
@@ -265,20 +278,32 @@ export default function GenerateTitlesModal({ isOpen, onClose, tableData }: Gene
                   Select the titles you want to use:
                 </p>
                 <div className="flex items-center gap-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCopyAllSelected}
-                    disabled={selectedTitles.size === 0}
-                    className="text-xs"
-                  >
-                    <Copy className="h-3 w-3 mr-1" />
-                    Copy Selected ({selectedTitles.size})
-                  </Button>
-                  <div className="text-sm text-gray-500">
-                    Model: <span className="font-medium">{selectedModel}</span>
-                  </div>
-                </div>
+                   <div className="flex gap-2">
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       onClick={handleCopyAllSelected}
+                       disabled={selectedTitles.size === 0}
+                       className="text-xs"
+                     >
+                       <Copy className="h-3 w-3 mr-1" />
+                       Copy Selected ({selectedTitles.size})
+                     </Button>
+                     <Button
+                       variant="outline"
+                       size="sm"
+                       onClick={handleCopyAllTitles}
+                       disabled={generatedTitles.length === 0}
+                       className="text-xs"
+                     >
+                       <Copy className="h-3 w-3 mr-1" />
+                       Copy All ({generatedTitles.length})
+                     </Button>
+                   </div>
+                   <div className="text-sm text-gray-500">
+                     Model: <span className="font-medium">{selectedModel}</span>
+                   </div>
+                 </div>
               </div>
 
               <div className="space-y-3">
@@ -295,7 +320,7 @@ export default function GenerateTitlesModal({ isOpen, onClose, tableData }: Gene
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <p 
-                          className="font-medium text-gray-900 select-text cursor-text leading-relaxed"
+                          className="font-medium text-gray-900 select-text cursor-text leading-relaxed user-select-text"
                           onClick={(e) => e.stopPropagation()}
                           onDoubleClick={(e) => {
                             e.stopPropagation();
@@ -305,6 +330,8 @@ export default function GenerateTitlesModal({ isOpen, onClose, tableData }: Gene
                             selection?.removeAllRanges();
                             selection?.addRange(range);
                           }}
+                          onContextMenu={(e) => e.stopPropagation()}
+                          style={{ userSelect: 'text', WebkitUserSelect: 'text' }}
                         >
                           {title.title}
                         </p>
