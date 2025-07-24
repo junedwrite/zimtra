@@ -306,6 +306,9 @@ export default function VideosPage() {
               <table className="min-w-full border-collapse border border-gray-300">
                 <thead>
                   <tr className="bg-gray-50">
+                    <th className="border border-gray-300 px-4 py-2 text-left font-semibold">
+                       ID
+                    </th>
                     {fields.map((field) => (
                       <th
                         key={field.id}
@@ -321,8 +324,12 @@ export default function VideosPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((row) => (
+                  {rows.map((row, index) => (
                     <tr key={row.id} className="hover:bg-gray-50">
+                     
+                      <td className="border border-gray-300 px-4 py-2">
+                        {index+1}
+                      </td>
                       {fields.map((field) => {
                         const value = row[field.name];
                         

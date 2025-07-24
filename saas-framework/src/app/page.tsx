@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
@@ -21,10 +21,22 @@ interface AdvancedSearchParams {
   maxResults: number;
 }
 
+interface VideoStats {
+  totalVideos: number;
+  totalViews: number;
+  totalLikes: number;
+}
+
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [videoStats, setVideoStats] = useState<VideoStats>({
+    totalVideos: 0,
+    totalViews: 0,
+    totalLikes: 0
+  });
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [advancedParams, setAdvancedParams] = useState<AdvancedSearchParams>({
     regionCode: 'any',
     relevanceLanguage: 'any',
@@ -35,6 +47,62 @@ export default function Home() {
     maxResults: 25
   });
   const router = useRouter();
+
+  // Fetch video statistics from Baserow
+  useEffect(() => {
+    const fetchVideoStats = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BASEROW_API_URL}/api/database/rows/table/${process.env.NEXT_PUBLIC_BASEROW_TABLE_ID}/?user_field_names=true`, {
+          headers: {
+            'Authorization': `Token ${process.env.NEXT_PUBLIC_BASEROW_API_TOKEN}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const totalVideos = data.count || 0;
+          
+          // Check if we need to fetch all results for accurate totals
+          let allResults = data.results || [];
+          if (data.count > allResults.length) {
+            // Fetch all results
+            const allResponse = await fetch(`${process.env.NEXT_PUBLIC_BASEROW_API_URL}/api/database/rows/table/${process.env.NEXT_PUBLIC_BASEROW_TABLE_ID}/?user_field_names=true&size=${data.count}`, {
+              headers: {
+                'Authorization': `Token ${process.env.NEXT_PUBLIC_BASEROW_API_TOKEN}`
+              }
+            });
+            if (allResponse.ok) {
+              const allData = await allResponse.json();
+              allResults = allData.results || [];
+            }
+          }
+          
+          const totalViews = allResults.reduce((sum: number, video: { Views?: string | number }) => {
+            const views = parseInt(String(video.Views)) || 0;
+            return sum + views;
+          }, 0);
+          
+          const totalLikes = allResults.reduce((sum: number, video: { Likes?: string | number }) => {
+            const likes = parseInt(String(video.Likes)) || 0;
+            return sum + likes;
+          }, 0);
+          
+          setVideoStats({
+            totalVideos,
+            totalViews,
+            totalLikes
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch video stats:', error);
+        // Keep default values on error
+      } finally {
+        setIsLoadingStats(false);
+      }
+    };
+
+    fetchVideoStats();
+  }, []);
 
   const handleAdvancedParamChange = (key: keyof AdvancedSearchParams, value: string | number) => {
     setAdvancedParams(prev => ({
@@ -344,21 +412,39 @@ export default function Home() {
           <Card className="text-center">
             <CardContent className="p-6">
               <Video className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-              <h3 className="text-2xl font-bold text-gray-900">2</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {isLoadingStats ? (
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                ) : (
+                  videoStats.totalVideos.toLocaleString()
+                )}
+              </h3>
               <p className="text-gray-600">Total Videos</p>
             </CardContent>
           </Card>
           <Card className="text-center">
             <CardContent className="p-6">
               <Eye className="h-8 w-8 text-green-600 mx-auto mb-2" />
-              <h3 className="text-2xl font-bold text-gray-900">55</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {isLoadingStats ? (
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                ) : (
+                  videoStats.totalViews.toLocaleString()
+                )}
+              </h3>
               <p className="text-gray-600">Total Views</p>
             </CardContent>
           </Card>
           <Card className="text-center">
             <CardContent className="p-6">
               <TrendingUp className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-              <h3 className="text-2xl font-bold text-gray-900">34</h3>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {isLoadingStats ? (
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                ) : (
+                  videoStats.totalLikes.toLocaleString()
+                )}
+              </h3>
               <p className="text-gray-600">Total Likes</p>
             </CardContent>
           </Card>
