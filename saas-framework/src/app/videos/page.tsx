@@ -18,11 +18,20 @@ interface BaserowField {
 }
 
 interface ThumbnailData {
-  url?: string;
-  visible_name?: string;
-  thumbnails?: {
-    small?: { url: string };
+  url: string;
+  thumbnails: {
+    tiny?: { url: string; width: number | null; height: number };
+    small?: { url: string; width: number; height: number };
+    card_cover?: { url: string; width: number; height: number };
   };
+  visible_name: string;
+  name: string;
+  size: number;
+  mime_type: string;
+  is_image: boolean;
+  image_width: number;
+  image_height: number;
+  uploaded_at: string;
 }
 
 interface BaserowRow {
@@ -319,18 +328,25 @@ export default function VideosPage() {
                         
                         // Handle thumbnail field specially
                         if (field.name === 'thumbnail' && Array.isArray(value) && value.length > 0) {
-                          const thumbnail = value[0] as {
-                            thumbnails?: {
-                              small?: { url: string };
-                            };
-                            url?: string;
-                            visible_name?: string;
-                          };
+                          const thumbnail = value[0] as ThumbnailData;
+                          // Use the full-size image URL - ensure we get the main image, not thumbnail variants
+                          let imageUrl = thumbnail.url;
+                          
+                          // If the URL contains thumbnails path, construct the full-size URL
+                          if (imageUrl.includes('/media/thumbnails/')) {
+                            // Extract the filename and construct the full-size URL
+                            const filename = thumbnail.name;
+                            imageUrl = `https://baserow.zimtra.cloud/media/user_files/${filename}`;
+                          }
+                          
+                          console.log('Original URL:', thumbnail.url);
+                          console.log('Using URL:', imageUrl);
+                          
                           return (
                             <td key={`${row.id}-${field.id}`} className="border border-gray-300 px-4 py-2">
                               <div className="flex items-center space-x-2">
                                 <img 
-                                  src={thumbnail.thumbnails?.small?.url || thumbnail.url} 
+                                  src={imageUrl} 
                                   alt={thumbnail.visible_name}
                                   className="w-12 h-12 object-cover rounded cursor-pointer transition-all duration-200 hover:ring-2 hover:ring-yellow-400 hover:ring-offset-2 hover:shadow-lg"
                                   onClick={() => handleThumbnailClick(row)}

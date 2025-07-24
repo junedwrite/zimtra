@@ -190,7 +190,7 @@ export function GenerateThumbnailModal({ isOpen, onClose, rowData }: GenerateThu
                 <div className="flex items-center space-x-6">
                   <div className="relative group">
                     <img 
-                      src={rowData.thumbnail[0].thumbnails?.small?.url || rowData.thumbnail[0].url} 
+                      src={rowData.thumbnail[0].url || rowData.thumbnail[0].thumbnails?.small?.url} 
                       alt={rowData.thumbnail[0].visible_name || "Current thumbnail"}
                       className="w-32 h-20 object-cover rounded-lg border-2 border-gray-300 shadow-md transition-transform group-hover:scale-105"
                       onError={(e) => {
